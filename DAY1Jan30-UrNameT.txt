@@ -1,6 +1,6 @@
 !@@@FOR CORE TAAS ONLY
 config t
-   hostname CORETAAS-M
+   hostname COREBABA-22
    enable secret pass
    service password-encryption
    no logging console
@@ -15,24 +15,24 @@ config t
       exec-timeout 0 0
    Int Vlan 1
      no shutdown
-	 ip add 10.M.1.2 255.255.255.0
+	 ip add 10.22.1.2 255.255.255.0
 	 description MGMTDATA
    Int Vlan 10
      no shutdown
-	 ip add 10.M.10.2 255.255.255.0
+	 ip add 10.22.10.2 255.255.255.0
 	 description WIRELESS
    Int Vlan 50
      no shutdown
-	 ip add 10.M.50.2 255.255.255.0
+	 ip add 10.22.50.2 255.255.255.0
 	 description IPCCTV
    Int Vlan 100
      no shutdown
-	 ip add 10.M.100.2 255.255.255.0
+	 ip add 10.22.100.2 255.255.255.0
 	 description VOICEVLAN
 
 !@@@LeafSwitchONLY
 config t
-   hostname COREbaba12
+   hostname COREbaba22
    enable secret pass
    service password-encryption
    no logging console
@@ -48,55 +48,78 @@ config t
    Int Gi 0/1
      no shutdown
 	  no switchport
-	  ip add 10.M.M.4 255.255.255.0
+	  ip add 10.22.22.4 255.255.255.0
    Int Vlan 1
      no shutdown
-	 ip add 10.M.1.4 255.255.255.0
+	 ip add 10.22.1.4 255.255.255.0
 	 description MGMTDATA
    Int Vlan 10
      no shutdown
-	 ip add 10.M.10.4 255.255.255.0
+	 ip add 10.22.10.4 255.255.255.0
 	 description WIRELESS
    Int Vlan 50
      no shutdown
-	 ip add 10.M.50.4 255.255.255.0
+	 ip add 10.22.50.4 255.255.255.0
 	 description IPCCTV
    Int Vlan 100
      no shutdown
-	 ip add 10.12.100.4 255.255.255.0
+	 ip add 10.22.100.4 255.255.255.0
 	 description VOICEVLAN
+
+Encor LAB: trunk it, etherchannel it, allowit
+taas/baba:
+
+conf t
+interface range fa0/10-12
+switchport trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk allowed vlan 1,10,50,100,999
+!Enable LinkAggregation CP etherchannel
+channel-group 10 mode active
+channel-protocol Lacp
+do show etherchannle summary
 	 
 !DHCP: DYNAMIC HOST CONFIGURATION PROTOCOL
 !@@@LEAF SWITCH
 config t
-ip dhcp Excluded-add 10._.1.1 10._.1.100
-ip dhcp Excluded-add 10._.10.1 10._.10.100
-ip dhcp Excluded-add 10._.50.1 10._.50.100
-ip dhcp Excluded-add 10._.100.1 10._.100.100
+ip dhcp Excluded-add 10.22.1.1 10.22.1.100
+ip dhcp Excluded-add 10.22.10.1 10.22.10.100
+ip dhcp Excluded-add 10.22.50.1 10.22.50.100
+ip dhcp Excluded-add 10.22.100.1 10.22.100.100
 ip dhcp pool MGMTDATA
-   network 10._.1.0 255.255.255.0
-   default-router 10._.1.4
+   network 10.22.1.0 255.255.255.0
+   default-router 10.22.1.4
    domain-name MGMTDATA.COM
-   dns-server 10._.1.10
+   dns-server 10.22.1.10
 ip dhcp pool WIFIDATA
-   network 10._.10.0 255.255.255.0
-   default-router 10._.10.4
+   network 10.22.10.0 255.255.255.0
+   default-router 10.22.10.4
    domain-name WIFIDATA.COM
-   dns-server 10._.1.10
+   dns-server 10.22.1.10
 ip dhcp pool IPCCTV
-   network 10._.50.0 255.255.255.0
-   default-router 10._.50.4
+   network 10.22.50.0 255.255.255.0
+   default-router 10.22.50.4
    domain-name IPCCTV.COM
-   dns-server 10._.1.10
+   dns-server 10.22.1.10
 ip dhcp pool VOICEVLAN
-   network 10._.100.0 255.255.255.0
-   default-router 10._.100.4
+   network 10.22.100.0 255.255.255.0
+   default-router 10.22.100.4
    domain-name VOICEVLAN.COM
-   dns-server 10._.1.10
-   option 150 ip 10._.100.8   
+   dns-server 10.22.1.10
+   option 150 ip 10.22.100.8   
    END
+VTP: VLAN TRUNKING PROTOCOL: NEEDs trunking, SYNC VLANS
+CoreTAAS/BABA
+config t
+vtp domain CCNP
+vtp password ENCOR401
+vtp mode server
+exit
+
+
 
 !!CREATING AND PLACING PORTS INSIDEAVLAN:
+CORETAAS:
 config t
 vlan 10
    name WIFIVLAN
@@ -104,6 +127,8 @@ vlan 50
    name IPCCTVLAN
 vlan 100
    name VOICEVLAN
+exit
+Corebaba:
 Int Fa 0/2
   switchport mode access
   switchport access vlan 10  
@@ -126,11 +151,22 @@ Int Fa 0/7
   switchport mode access
   switchport access vlan 100    
  end
- 
+
+IP CAMERA needs MAC dhcp Reservation:
+CoreBABA:
+ip dhcp pool CAM6
+host 10.22.50.6 255.255.255.0
+client-identifier  001a.0704.7f6a
+ip dhcp pool CAM8
+host 10.22.50.8 255.255.255.0
+client-identifier  001a.0709.c238
+end
+sh ip dhcp binding
+
 !!cisco unified call manager Express command
 !@@@CUCM-M
 config t
-   hostname CUCM-12
+   hostname CUCM-22
    enable secret pass
    service password-encryption
    no logging console
@@ -145,22 +181,22 @@ config t
       exec-timeout 0 0
    Int Fa 0/0
      no shutdown
-	 ip add 10.12.100.8 255.255.255.0 
+	 ip add 10.22.100.8 255.255.255.0 
 	 end
    
 !!!CUCM ANALOG PHONES CONFIG
 configure terminal
 dial-peer voice 1 pots
-   destination-pattern 1200
+   destination-pattern 2200
    port 0/0/0
 dial-peer voice 2 pots
-   destination-pattern 1201
+   destination-pattern 2201
    port 0/0/1
 dial-peer voice 3 pots
-   destination-pattern 1202
+   destination-pattern 2202
    port 0/0/2
 dial-peer voice 4 pots
-   destination-pattern 1203
+   destination-pattern 2203
    port 0/0/3
 end
 
@@ -172,31 +208,31 @@ telephony-service
    no auto-reg-ephone
    max-ephones 5
    max-dn 20
-   ip source-address 10._.100.8 port 2000
+   ip source-address 10.22.100.8 port 2000
    create cnf-files
 ephone-dn 1
-  number _11
+  number 2211
 ephone-dn 2
-  number _22
+  number 2222
 ephone-dn 3
-  number _33
+  number 2233
 ephone-dn 4
-  number _44
+  number 2244
 ephone-dn 5
-  number _55
+  number 2255
 ephone-dn 6
-  number _66
+  number 2266
 ephone-dn 7
-  number _77
+  number 2277
 ephone-dn 8
-  number _88	
+  number 2288	
 Ephone 1
-  Mac-address ____.____.____
+  Mac-address ccd8.c1fb.10a9
   type 8945
   button 1:1 2:3 3:2 4:4
   restart
 Ephone 2
-  Mac-address ____.____.____
+  Mac-address 6cfa.8972.ecbf
   type 8945
   button 1:5 2:6 3:7 4:8
   restart  
@@ -228,18 +264,18 @@ configure terminal
  destination-pattern 11..
  session target ipv4:10.11.100.8
  codec g711ULAW
-!dial-peer voice 12 Voip
-! destination-pattern 12..
-! session target ipv4:10.12.100.8
-! codec g711ULAW
+dial-peer voice 12 Voip
+ destination-pattern 12..
+ session target ipv4:10.12.100.8
+ codec g711ULAW
 dial-peer voice 21 Voip
  destination-pattern 21..
  session target ipv4:10.21.100.8
  codec g711ULAW
-dial-peer voice 22 Voip
- destination-pattern 22..
- session target ipv4:10.22.100.8
- codec g711ULAW
+!dial-peer voice 22 Voip
+!destination-pattern 22..
+!session target ipv4:10.22.100.8
+!codec g711ULAW
 dial-peer voice 31 Voip
  destination-pattern 31..
  session target ipv4:10.31.100.8
@@ -292,7 +328,7 @@ dial-peer voice 82 Voip
 @@@@@@
 !@@@EDGE ROUTE CONFIG
 config t
-   hostname EDGE11
+   hostname EDGE22
    enable secret pass
    service password-encryption
    no logging console
@@ -307,25 +343,42 @@ config t
       exec-timeout 0 0
    Int Gi 0/0/0
      description INSIDE
-     ip add 10.12.12.1 255.255.255.0
+     ip add 10.22.22.1 255.255.255.0
 	 no shutdown
    Int Gi 0/0/1
      description OUTSIDE
-	 ip add 200.0.0.12 255.255.255.0
+	 ip add 200.0.0.22 255.255.255.0
 	 no shutdown
    Int Loopback 0
      description VIRTUALIP
-	 ip add 12.0.0.1 255.255.255.255
+	 ip add 22.0.0.1 255.255.255.255
  end
 
- 
+ Multi area OSFP config
+@edge:
+config t
+router ospf 1
+router-id 22.0.0.1
+network 200.0.0.0 0.0.0.255 area 0
+network 22.0.0.1 0.0.0.0 area 22
+network 10.22.22.0 0.0.0.255 area 22
+
+@CoreBABA: use soute summarization
+conf t
+router ospf 1
+network 10.22.0.0 0.0.255.255 area 22
+
+@CUCM: use Super tamad method:
+config t
+router ospf 1
+network 0.0.0.0 255.255.255.255 area 22
  !!! EDGE route NOT dikit to ClassMate:
  conf t
  ip routing 
  ip route 10.11.0.0 255.255.0.0 200.0.0.11
- !ip route 10.12.0.0 255.255.0.0 200.0.0.12
+ ip route 10.12.0.0 255.255.0.0 200.0.0.12
  ip route 10.21.0.0 255.255.0.0 200.0.0.21
- ip route 10.22.0.0 255.255.0.0 200.0.0.22
+ !ip route 10.22.0.0 255.255.0.0 200.0.0.22
  ip route 10.31.0.0 255.255.0.0 200.0.0.31
  ip route 10.32.0.0 255.255.0.0 200.0.0.32
  ip route 10.41.0.0 255.255.0.0 200.0.0.41
@@ -338,7 +391,7 @@ config t
  ip route 10.72.0.0 255.255.0.0 200.0.0.72
  ip route 10.81.0.0 255.255.0.0 200.0.0.81
  ip route 10.82.0.0 255.255.0.0 200.0.0.82
- ip route 10._.0.0 255.255.0.0 10._._.4
+ ip route 10.22.0.0 255.255.0.0 10.22.22.4
  end
  
 *********************************************
